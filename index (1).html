@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Transform Lab — Shape Transformations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --ink-soft:#5B6786;
+    --paper:#FAFBFC;
+    --panel:#FFFFFF;
+    --line:#DEE5EF;
+    --line-strong:#B9C4D6;
+
+    --translate:#2F6FED;   --translate-tint:#EAF1FE;
+    --reflect:#D6337B;     --reflect-tint:#FCEAF2;
+    --rotate:#E08A1E;      --rotate-tint:#FDF1E3;
+    --enlarge:#1F9E6D;     --enlarge-tint:#E7F6EF;
+
+    --radius:12px;
+    --shadow:0 1px 2px rgba(27,42,74,.06), 0 8px 24px rgba(27,42,74,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- header ---------- */
+  .app-header{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; padding:14px 20px;
+    border-bottom:1px solid var(--line);
+    background:var(--panel);
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand svg{display:block;}
+  .brand-text h1{font-size:19px; margin:0; font-weight:700; letter-spacing:.2px;}
+  .brand-text p{margin:0; font-size:12px; color:var(--ink-soft);}
+  .header-actions{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px;
+    border-radius:10px; border:1.5px solid var(--line);
+    background:var(--panel); color:var(--ink);
+    padding:9px 14px; cursor:pointer; min-height:40px;
+    display:inline-flex; align-items:center; gap:6px;
+    transition:transform .06s ease, border-color .15s ease, background .15s ease;
+  }
+  .btn:hover{border-color:var(--line-strong);}
+  .btn:active{transform:translateY(1px);}
+  .btn-quiz{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .btn-quiz.active{background:var(--reflect); border-color:var(--reflect);}
+  .btn-ghost{border-color:transparent; background:transparent;}
+  .btn-sm{padding:6px 10px; min-height:32px; font-size:12.5px; border-radius:8px;}
+  .btn-icon{width:16px; height:16px; flex:none;}
+
+  /* ---------- layout ---------- */
+  .app-main{
+    max-width:1280px; margin:0 auto; padding:18px 20px 60px;
+    display:grid; grid-template-columns:1.5fr 1fr; gap:20px;
+    align-items:start;
+  }
+  @media (max-width:900px){
+    .app-main{grid-template-columns:1fr; padding:14px 12px 40px;}
+  }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+
+  /* ---------- canvas column ---------- */
+  .canvas-col{display:flex; flex-direction:column; gap:14px;}
+  .hint-bar{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 14px; border-radius:10px;
+    background:var(--translate-tint); color:var(--ink);
+    font-size:13.5px; font-weight:500;
+    border:1px solid transparent;
+  }
+  .hint-dot{width:8px; height:8px; border-radius:50%; flex:none; background:var(--translate);}
+
+  .canvas-panel{padding:12px; position:relative;}
+  .grid-wrap{position:relative; width:100%; aspect-ratio:1/1; touch-action:none;}
+  .grid-wrap svg{width:100%; height:100%; display:block; border-radius:8px; background:#fff;}
+
+  .mode-banner{
+    position:absolute; left:12px; right:12px; top:12px;
+    background:rgba(27,42,74,.94); color:#fff; border-radius:10px;
+    padding:10px 12px; font-size:13px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    box-shadow:var(--shadow);
+  }
+  .mode-banner .btn{padding:5px 10px; min-height:28px; font-size:12px;}
+
+  .coord-panel{padding:14px 16px;}
+  .coord-panel h3{margin:0 0 10px; font-size:13.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--ink-soft);}
+  table.coord-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.coord-table th, table.coord-table td{padding:7px 8px; text-align:left; border-bottom:1px solid var(--line);}
+  table.coord-table th{font-family:'Inter',sans-serif; font-weight:600; color:var(--ink-soft); font-size:12px; text-transform:uppercase; letter-spacing:.4px;}
+  table.coord-table td.mono{font-size:13.5px;}
+  table.coord-table tr:last-child td{border-bottom:none;}
+  .col-image{color:var(--accent, var(--translate)); font-weight:600;}
+
+  /* ---------- sidebar ---------- */
+  .sidebar{display:flex; flex-direction:column; gap:14px;}
+  .sidebar-section{padding:16px;}
+  .sidebar-section h3{margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.6px; color:var(--ink-soft);}
+
+  select.shape-select{
+    width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--line);
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:500; color:var(--ink); background:#fff;
+  }
+
+  .tabs{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+  .tab-btn{
+    border-radius:10px; border:1.5px solid var(--line); background:#fff;
+    padding:9px 4px; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:12px;
+    display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; color:var(--ink-soft);
+    transition:all .15s ease;
+  }
+  .tab-btn svg{width:18px; height:18px;}
+  .tab-btn.active{color:#fff; border-color:transparent;}
+  .tab-btn[data-type="translate"].active{background:var(--translate);}
+  .tab-btn[data-type="reflect"].active{background:var(--reflect);}
+  .tab-btn[data-type="rotate"].active{background:var(--rotate);}
+  .tab-btn[data-type="enlarge"].active{background:var(--enlarge);}
+
+  .tab-panel{margin-top:14px; display:none;}
+  .tab-panel.active{display:block;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px;}
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1; margin-bottom:0;}
+
+  .stepper{display:flex; align-items:stretch; border:1.5px solid var(--line); border-radius:10px; overflow:hidden;}
+  .stepper button{
+    width:34px; border:none; background:#F2F5F9; color:var(--ink); font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .stepper button:active{background:#E5EAF1;}
+  .stepper input{
+    flex:1; min-width:0; text-align:center; border:none; padding:8px 4px;
+    font-family:'JetBrains Mono',monospace; font-size:14.5px; font-weight:600; color:var(--ink);
+    -moz-appearance:textfield;
+  }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+
+  .chip-row{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip{
+    border:1.5px solid var(--line); background:#fff; color:var(--ink-soft);
+    border-radius:999px; padding:7px 12px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .chip.active{color:#fff; border-color:transparent;}
+  .tab-panel[data-panel="translate"] .chip.active{background:var(--translate);}
+  .tab-panel[data-panel="reflect"] .chip.active{background:var(--reflect);}
+  .tab-panel[data-panel="rotate"] .chip.active{background:var(--rotate);}
+  .tab-panel[data-panel="enlarge"] .chip.active{background:var(--enlarge);}
+
+  .pick-btn{
+    width:100%; margin-top:2px; margin-bottom:12px; border-radius:10px; border:1.5px dashed var(--line-strong);
+    background:#F7F9FC; padding:9px 10px; font-size:12.5px; font-weight:600; color:var(--ink); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .pick-btn.active{background:var(--ink); color:#fff; border-style:solid; border-color:var(--ink);}
+
+  .custom-toggle{font-size:12.5px; font-weight:600; color:var(--ink-soft); display:flex; align-items:center; gap:6px; cursor:pointer; margin:10px 0;}
+  .custom-fields{display:none;}
+  .custom-fields.open{display:block;}
+
+  .sidebar-footer{display:flex; gap:8px; margin-top:16px;}
+  .sidebar-footer .btn{flex:1; justify-content:center;}
+
+  details.howto{font-size:13px; color:var(--ink-soft);}
+  details.howto summary{cursor:pointer; font-weight:600; color:var(--ink); list-style:none; font-family:'Space Grotesk',sans-serif; font-size:13px;}
+  details.howto summary::-webkit-details-marker{display:none;}
+  details.howto ul{margin:10px 0 0; padding-left:18px;}
+  details.howto li{margin-bottom:6px;}
+
+  /* ---------- quiz ---------- */
+  .quiz-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .score-badge{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600;
+    background:var(--reflect-tint); color:var(--reflect); padding:5px 10px; border-radius:999px;
+  }
+  .quiz-question{font-size:14.5px; font-weight:600; margin:10px 0 12px;}
+  .quiz-options{display:flex; flex-direction:column; gap:8px;}
+  .quiz-opt{
+    text-align:left; padding:11px 13px; border-radius:10px; border:1.5px solid var(--line); background:#fff;
+    font-family:'Inter',sans-serif; font-size:13.5px; font-weight:500; cursor:pointer; color:var(--ink);
+  }
+  .quiz-opt.correct{border-color:var(--enlarge); background:var(--enlarge-tint); color:#116B49;}
+  .quiz-opt.wrong{border-color:var(--reflect); background:var(--reflect-tint); color:#9E1F5F;}
+  .quiz-feedback{font-size:13px; font-weight:600; margin-top:10px; min-height:18px;}
+  .quiz-feedback.ok{color:var(--enlarge);}
+  .quiz-feedback.bad{color:var(--reflect);}
+  .quiz-next{margin-top:12px; width:100%; justify-content:center;}
+
+  ::selection{background:var(--translate-tint);}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+      <polygon points="6,26 6,10 20,26" fill="#1B2A4A"/>
+      <polygon points="14,26 14,10 28,26" fill="none" stroke="#2F6FED" stroke-width="1.8" stroke-dasharray="3 2.5"/>
+    </svg>
+    <div class="brand-text">
+      <h1>Transform Lab</h1>
+      <p>Translation · Reflection · Rotation · Enlargement</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-quiz" id="quizToggleBtn" onclick="toggleQuiz()">Quiz mode</button>
+    <button class="btn" onclick="resetAll()">Reset</button>
+  </div>
+</header>
+
+<main class="app-main">
+
+  <!-- CANVAS COLUMN -->
+  <section class="canvas-col">
+    <div class="hint-bar" id="hintBar">
+      <span class="hint-dot" id="hintDot"></span>
+      <span id="hintText">Drag the blue shape, or set a vector on the right.</span>
+    </div>
+
+    <div class="panel canvas-panel">
+      <div class="grid-wrap">
+        <svg id="gridSvg" viewBox="-10.5 -10.5 21 21">
+          <g id="gridLayer"></g>
+          <g id="overlayLayer"></g>
+          <g id="origLayer"></g>
+          <g id="imageLayer"></g>
+          <g id="drawLayer"></g>
+          <g id="labelLayer"></g>
+        </svg>
+        <div class="mode-banner" id="modeBanner" style="display:none;">
+          <span id="modeBannerText"></span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn" id="modeBannerBtn2" style="display:none;" onclick="undoDrawPoint()">Undo point</button>
+            <button class="btn" id="modeBannerBtn" onclick="finishDrawShape()">Finish</button>
+            <button class="btn btn-ghost" onclick="cancelMode()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel coord-panel" id="coordPanel">
+      <h3>Coordinates</h3>
+      <table class="coord-table" id="coordTable"></table>
+    </div>
+  </section>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="panel sidebar-section" id="shapeSection">
+      <h3>Shape</h3>
+      <select class="shape-select" id="shapeSelect" onchange="onShapeSelect(this.value)">
+        <option value="triangle">Triangle</option>
+        <option value="square">Square</option>
+        <option value="lshape">L-shape</option>
+        <option value="arrow">Arrow</option>
+        <option value="custom">Draw your own…</option>
+      </select>
+    </div>
+
+    <div class="panel sidebar-section" id="normalControls">
+      <h3>Transformation</h3>
+      <div class="tabs" id="tabsRow">
+        <button class="tab-btn" data-type="translate" onclick="setActiveTransform('translate')">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h13M12 6l7 6-7 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Translate
+        </button>
+        <button class="tab-btn" data-type="reflect" onclick="setActiveTransform('reflect')">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18" stroke="currentColor" stroke-width="2" stroke-dasharray="2.5 2.5"/><path d="M6 8l-2 4 2 4M18 8l2 4-2 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Reflect
+        </button>
+        <button class="tab-btn" data-type="rotate" onclick="setActiveTransform('rotate')">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 3 6.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M3 15l1 4 4-1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Rotate
+        </button>
+        <button class="tab-btn" data-type="enlarge" onclick="setActiveTransform('enlarge')">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Enlarge
+        </button>
+      </div>
+
+      <!-- TRANSLATE PANEL -->
+      <div class="tab-panel" data-panel="translate">
+        <div class="field-row">
+          <div class="field">
+            <label>x-step (dx)</label>
+            <div class="stepper">
+              <button onclick="step('t-dx',-1)">−</button>
+              <input type="number" id="t-dx" value="3" step="1" min="-10" max="10" onchange="onParamChange()">
+              <button onclick="step('t-dx',1)">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>y-step (dy)</label>
+            <div class="stepper">
+              <button onclick="step('t-dy',-1)">−</button>
+              <input type="number" id="t-dy" value="2" step="1" min="-10" max="10" onchange="onParamChange()">
+              <button onclick="step('t-dy',1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REFLECT PANEL -->
+      <div class="tab-panel" data-panel="reflect">
+        <div class="field">
+          <label>Mirror line</label>
+          <div class="chip-row" id="reflectChips">
+            <button class="chip" data-line="x-axis" onclick="setReflectLine('x-axis')">x-axis</button>
+            <button class="chip" data-line="y-axis" onclick="setReflectLine('y-axis')">y-axis</button>
+            <button class="chip" data-line="y=x" onclick="setReflectLine('y=x')">y = x</button>
+            <button class="chip" data-line="y=-x" onclick="setReflectLine('y=-x')">y = −x</button>
+            <button class="chip" data-line="custom" onclick="setReflectLine('custom')">custom…</button>
+          </div>
+        </div>
+        <div class="custom-fields" id="reflectCustomFields">
+          <div class="field-row">
+            <div class="field">
+              <label>gradient (m)</label>
+              <div class="stepper">
+                <button onclick="step('r-m',-0.5)">−</button>
+                <input type="number" id="r-m" value="1" step="0.5" min="-5" max="5" onchange="onParamChange()">
+                <button onclick="step('r-m',0.5)">+</button>
+              </div>
+            </div>
+            <div class="field">
+              <label>intercept (c)</label>
+              <div class="stepper">
+                <button onclick="step('r-c',-1)">−</button>
+                <input type="number" id="r-c" value="0" step="1" min="-10" max="10" onchange="onParamChange()">
+                <button onclick="step('r-c',1)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROTATE PANEL -->
+      <div class="tab-panel" data-panel="rotate">
+        <button class="pick-btn" id="rotatePickBtn" onclick="togglePickCenter('rotate')">⌖ Pick centre on grid</button>
+        <div class="field-row">
+          <div class="field">
+            <label>centre x</label>
+            <div class="stepper">
+              <button onclick="step('ro-cx',-1)">−</button>
+              <input type="number" id="ro-cx" value="0" step="1" min="-10" max="10" onchange="onParamChange()">
+              <button onclick="step('ro-cx',1)">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>centre y</label>
+            <div class="stepper">
+              <button onclick="step('ro-cy',-1)">−</button>
+              <input type="number" id="ro-cy" value="0" step="1" min="-10" max="10" onchange="onParamChange()">
+              <button onclick="step('ro-cy',1)">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>angle</label>
+          <div class="chip-row">
+            <button class="chip" data-angle="90" onclick="setRotateAngle(90)">90°</button>
+            <button class="chip" data-angle="180" onclick="setRotateAngle(180)">180°</button>
+            <button class="chip" data-angle="270" onclick="setRotateAngle(270)">270°</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>direction</label>
+          <div class="chip-row">
+            <button class="chip" data-dir="cw" onclick="setRotateDir('cw')">Clockwise</button>
+            <button class="chip" data-dir="ccw" onclick="setRotateDir('ccw')">Anticlockwise</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENLARGE PANEL -->
+      <div class="tab-panel" data-panel="enlarge">
+        <button class="pick-btn" id="enlargePickBtn" onclick="togglePickCenter('enlarge')">⌖ Pick centre on grid</button>
+        <div class="field-row">
+          <div class="field">
+            <label>centre x</label>
+            <div class="stepper">
+              <button onclick="step('e-cx',-1)">−</button>
+              <input type="number" id="e-cx" value="0" step="1" min="-10" max="10" onchange="onParamChange()">
+              <button onclick="step('e-cx',1)">+</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>centre y</label>
+            <div class="stepper">
+              <button onclick="step('e-cy',-1)">−</button>
+              <input type="number" id="e-cy" value="0" step="1" min="-10" max="10" onchange="onParamChange()">
+              <button onclick="step('e-cy',1)">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>scale factor (k)</label>
+          <div class="stepper">
+            <button onclick="step('e-k',-0.5)">−</button>
+            <input type="number" id="e-k" value="2" step="0.5" min="-3" max="3" onchange="onParamChange()">
+            <button onclick="step('e-k',0.5)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="btn" onclick="playAnimation()">▶ Play</button>
+      </div>
+    </div>
+
+    <!-- QUIZ PANEL -->
+    <div class="panel sidebar-section" id="quizPanel" style="display:none;">
+      <div class="quiz-header">
+        <h3 style="margin:0;">Describe the transformation</h3>
+        <span class="score-badge" id="scoreBadge">0 / 0</span>
+      </div>
+      <div class="quiz-question" id="quizQuestion"></div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback"></div>
+      <button class="btn quiz-next" id="quizNextBtn" style="display:none;" onclick="nextQuizQuestion()">Next question →</button>
+    </div>
+
+    <div class="panel sidebar-section">
+      <details class="howto">
+        <summary>How to use this</summary>
+        <ul>
+          <li>Pick a shape, or draw your own by clicking points on the grid.</li>
+          <li>Choose a transformation tab and set its values — the image (result) updates live.</li>
+          <li>On the Translate tab, you can also drag the shape directly.</li>
+          <li>Press <strong>Pick centre on grid</strong> then click the grid to set a centre for rotation or enlargement.</li>
+          <li>Press <strong>Play</strong> to animate the transformation.</li>
+          <li>Try <strong>Quiz mode</strong> to test identifying transformations.</li>
+        </ul>
+      </details>
+    </div>
+
+  </aside>
+</main>
+
+<script>
+/* ============================= CONSTANTS ============================= */
+const NS = "http://www.w3.org/2000/svg";
+const VB_MIN = -10.5, VB_MAX = 10.5, VB_SIZE = 21;
+const COLORS = {
+  translate: '#2F6FED', reflect:'#D6337B', rotate:'#E08A1E', enlarge:'#1F9E6D'
+};
+const TINTS = {
+  translate:'#EAF1FE', reflect:'#FCEAF2', rotate:'#FDF1E3', enlarge:'#E7F6EF'
+};
+const HINTS = {
+  translate:'Drag the blue shape, or set a vector on the right.',
+  reflect:'Choose a mirror line, or set your own with m and c.',
+  rotate:'Set a centre and an angle — try picking the centre on the grid.',
+  enlarge:'Set a centre and a scale factor to grow or shrink the shape.'
+};
+const PRESETS = {
+  triangle:[[1,1],[5,1],[1,4]],
+  square:[[1,1],[4,1],[4,4],[1,4]],
+  lshape:[[1,1],[3,1],[3,2],[2,2],[2,4],[1,4]],
+  arrow:[[1,1],[3,1],[3,0.3],[4.5,1.5],[3,2.7],[3,2],[1,2]]
+};
+const QUIZ_SHAPES = ['triangle','lshape','arrow'];
+
+/* ============================= STATE ============================= */
+let state = {
+  shapeKey:'triangle',
+  points: PRESETS.triangle.map(p=>({x:p[0], y:p[1]})),
+  active:'translate',
+  params:{
+    translate:{dx:3, dy:2},
+    reflect:{line:'y-axis', m:1, c:0},
+    rotate:{cx:0, cy:0, angle:90, dir:'cw'},
+    enlarge:{cx:0, cy:0, k:2}
+  },
+  animT:1,
+  animating:false,
+  mode:'normal',        // normal | drawShape | pickCenter
+  drawingPoints:[],
+  dragging:false,
+  quiz:{active:false, stage:1, current:null, score:{correct:0, total:0}}
+};
+
+/* ============================= MATH HELPERS ============================= */
+function letters(n){ return Array.from({length:n}, (_,i)=>String.fromCharCode(65+i)); }
+
+function normLine(a,b,c){
+  const len = Math.sqrt(a*a+b*b) || 1;
+  return {a:a/len, b:b/len, c:c/len};
+}
+function currentLine(){
+  const r = state.params.reflect;
+  switch(r.line){
+    case 'x-axis': return normLine(0,1,0);
+    case 'y-axis': return normLine(1,0,0);
+    case 'y=x':    return normLine(1,-1,0);
+    case 'y=-x':   return normLine(1,1,0);
+    default:       return normLine(r.m,-1,-r.c); // y = mx + c  ->  m x - y + c = 0
+  }
+}
+function reflectFoot(p, line){
+  const d = line.a*p.x + line.b*p.y - line.c;
+  return { x:p.x - line.a*d, y:p.y - line.b*d };
+}
+
+function computePoint(p, t){
+  switch(state.active){
+    case 'translate': {
+      const {dx,dy} = state.params.translate;
+      return { x:p.x + dx*t, y:p.y + dy*t };
+    }
+    case 'reflect': {
+      const line = currentLine();
+      const F = reflectFoot(p, line);
+      const vx = p.x - F.x, vy = p.y - F.y;
+      const s = 1 - 2*t;
+      return { x:F.x + vx*s, y:F.y + vy*s };
+    }
+    case 'rotate': {
+      const {cx,cy,angle,dir} = state.params.rotate;
+      const signed = (dir==='cw' ? -angle : angle) * Math.PI/180 * t;
+      const cos = Math.cos(signed), sin = Math.sin(signed);
+      const dx = p.x-cx, dy = p.y-cy;
+      return { x:cx + dx*cos - dy*sin, y:cy + dx*sin + dy*cos };
+    }
+    case 'enlarge': {
+      const {cx,cy,k} = state.params.enlarge;
+      const kk = 1 + (k-1)*t;
+      return { x:cx + (p.x-cx)*kk, y:cy + (p.y-cy)*kk };
+    }
+  }
+}
+function imagePoints(t){ return state.points.map(p=>computePoint(p,t)); }
+
+/* ============================= COORD CONVERSION ============================= */
+function toSvg(p){ return { x:p.x, y:-p.y }; }
+function ptStr(pts){ return pts.map(p=>{const s=toSvg(p); return `${s.x},${s.y}`;}).join(' '); }
+
+function svgEl(){ return document.getElementById('gridSvg'); }
+function clientToMath(clientX, clientY){
+  const rect = svgEl().getBoundingClientRect();
+  const fx = (clientX-rect.left)/rect.width;
+  const fy = (clientY-rect.top)/rect.height;
+  const svgX = VB_MIN + fx*VB_SIZE;
+  const svgY = VB_MIN + fy*VB_SIZE;
+  return { x:svgX, y:-svgY };
+}
+function snap(v, step){ return Math.round(v/step)*step; }
+
+/* ============================= GRID (static) ============================= */
+function buildGrid(){
+  const g = document.getElementById('gridLayer');
+  let s = '';
+  for(let i=-10;i<=10;i++){
+    const strong = (i===0);
+    const w = strong ? 1.6 : 0.6;
+    const col = strong ? '#B9C4D6' : '#DEE5EF';
+    s += `<line x1="${i}" y1="${-10.5}" x2="${i}" y2="${10.5}" stroke="${col}" stroke-width="${w/1}"/>`;
+    s += `<line x1="${-10.5}" y1="${-i}" x2="${10.5}" y2="${-i}" stroke="${col}" stroke-width="${w/1}"/>`;
+  }
+  for(let i=-10;i<=10;i+=2){
+    if(i!==0){
+      s += `<text x="${i}" y="${0.75}" font-size="0.6" fill="#5B6786" font-family="JetBrains Mono, monospace" text-anchor="middle">${i}</text>`;
+      s += `<text x="${-0.35}" y="${-i+0.22}" font-size="0.6" fill="#5B6786" font-family="JetBrains Mono, monospace" text-anchor="end">${i}</text>`;
+    }
+  }
+  s += `<text x="0.28" y="0.85" font-size="0.6" fill="#5B6786" font-family="JetBrains Mono, monospace">0</text>`;
+  g.innerHTML = s;
+}
+
+/* ============================= RENDER ============================= */
+function centroid(pts){
+  const n = pts.length;
+  const s = pts.reduce((a,p)=>({x:a.x+p.x, y:a.y+p.y}), {x:0,y:0});
+  return { x:s.x/n, y:s.y/n };
+}
+
+function renderShapes(t){
+  const orig = state.points;
+  const img = imagePoints(t);
+  const cOrig = centroid(orig);
+  const cImg = centroid(img);
+  const accent = COLORS[state.active];
+
+  document.getElementById('origLayer').innerHTML =
+    `<polygon points="${ptStr(orig)}" fill="#1B2A4A" fill-opacity="0.07" stroke="#1B2A4A" stroke-width="0.09"/>`;
+
+  document.getElementById('imageLayer').innerHTML =
+    `<polygon points="${ptStr(img)}" fill="${accent}" fill-opacity="0.14" stroke="${accent}" stroke-width="0.1"/>`;
+
+  const lbl = letters(orig.length);
+  let labels = '';
+  orig.forEach((p,i)=>{
+    const dir = {x:p.x-cOrig.x, y:p.y-cOrig.y};
+    const len = Math.sqrt(dir.x*dir.x+dir.y*dir.y)||1;
+    const off = {x:p.x+dir.x/len*0.55, y:p.y+dir.y/len*0.55};
+    const s = toSvg(off);
+    labels += `<text x="${s.x}" y="${s.y}" font-size="0.62" font-weight="600" fill="#1B2A4A" font-family="Space Grotesk, sans-serif" text-anchor="middle">${lbl[i]}</text>`;
+  });
+  const hideQuizLabels = state.quiz.active;
+  if(!hideQuizLabels || true){
+    img.forEach((p,i)=>{
+      const dir = {x:p.x-cImg.x, y:p.y-cImg.y};
+      const len = Math.sqrt(dir.x*dir.x+dir.y*dir.y)||1;
+      const off = {x:p.x+dir.x/len*0.55, y:p.y+dir.y/len*0.55};
+      const s = toSvg(off);
+      labels += `<text x="${s.x}" y="${s.y}" font-size="0.62" font-weight="600" fill="${accent}" font-family="Space Grotesk, sans-serif" text-anchor="middle">${lbl[i]}\u2032</text>`;
+    });
+  }
+  document.getElementById('labelLayer').innerHTML = labels;
+}
+
+function renderOverlay(t){
+  const layer = document.getElementById('overlayLayer');
+  const accent = COLORS[state.active];
+  const showNumbers = !state.quiz.active;
+  let s = '';
+
+  if(state.active==='translate' && t>0){
+    const cOrig = centroid(state.points);
+    const cImg = centroid(imagePoints(t));
+    const so = toSvg(cOrig), si = toSvg(cImg);
+    const len = Math.hypot(si.x-so.x, si.y-so.y);
+    if(len>0.15){
+      s += `<defs><marker id="arrowhead" markerWidth="6" markerHeight="6" refX="4.5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="${accent}"/></marker></defs>`;
+      s += `<line x1="${so.x}" y1="${so.y}" x2="${si.x}" y2="${si.y}" stroke="${accent}" stroke-width="0.11" stroke-dasharray="0.35 0.25" marker-end="url(#arrowhead)"/>`;
+    }
+    if(showNumbers){
+      const {dx,dy} = state.params.translate;
+      const mid = toSvg({x:(cOrig.x+cImg.x)/2, y:(cOrig.y+cImg.y)/2+0.6});
+      s += `<text x="${mid.x}" y="${mid.y}" font-size="0.6" font-weight="600" fill="${accent}" font-family="JetBrains Mono, monospace" text-anchor="middle">(${dx}, ${dy})</text>`;
+    }
+  }
+
+  if(state.active==='reflect'){
+    const line = currentLine();
+    const dir = {x:-line.b, y:line.a};
+    const base = {x:line.a*line.c, y:line.b*line.c};
+    const p1 = {x:base.x+dir.x*16, y:base.y+dir.y*16};
+    const p2 = {x:base.x-dir.x*16, y:base.y-dir.y*16};
+    const s1 = toSvg(p1), s2 = toSvg(p2);
+    s += `<line x1="${s1.x}" y1="${s1.y}" x2="${s2.x}" y2="${s2.y}" stroke="${accent}" stroke-width="0.09" stroke-dasharray="0.4 0.3"/>`;
+  }
+
+  if(state.active==='rotate'){
+    const {cx,cy,angle,dir} = state.params.rotate;
+    const sc = toSvg({x:cx,y:cy});
+    s += `<circle cx="${sc.x}" cy="${sc.y}" r="0.16" fill="${accent}"/>`;
+    if(state.points[0]){
+      const p0 = state.points[0];
+      const dOrig = toSvg(p0);
+      s += `<line x1="${sc.x}" y1="${sc.y}" x2="${dOrig.x}" y2="${dOrig.y}" stroke="${accent}" stroke-width="0.06" stroke-dasharray="0.25 0.2" opacity="0.55"/>`;
+      const pImg = computePoint(p0, t);
+      const dImg = toSvg(pImg);
+      s += `<line x1="${sc.x}" y1="${sc.y}" x2="${dImg.x}" y2="${dImg.y}" stroke="${accent}" stroke-width="0.09" stroke-dasharray="0.25 0.2"/>`;
+    }
+    if(showNumbers){
+      const lbl = toSvg({x:cx-0.3, y:cy-0.7});
+      s += `<text x="${lbl.x}" y="${lbl.y}" font-size="0.55" font-weight="600" fill="${accent}" font-family="JetBrains Mono, monospace" text-anchor="middle">${angle}° ${dir==='cw'?'CW':'ACW'}</text>`;
+    }
+  }
+
+  if(state.active==='enlarge'){
+    const {cx,cy,k} = state.params.enlarge;
+    const sc = toSvg({x:cx,y:cy});
+    s += `<circle cx="${sc.x}" cy="${sc.y}" r="0.16" fill="${accent}"/>`;
+    const img = imagePoints(t);
+    state.points.forEach((p,i)=>{
+      const far = img[i];
+      const d = toSvg(far);
+      s += `<line x1="${sc.x}" y1="${sc.y}" x2="${d.x}" y2="${d.y}" stroke="${accent}" stroke-width="0.06" stroke-dasharray="0.25 0.2" opacity="0.6"/>`;
+    });
+    if(showNumbers){
+      const lbl = toSvg({x:cx-0.3, y:cy-0.7});
+      s += `<text x="${lbl.x}" y="${lbl.y}" font-size="0.55" font-weight="600" fill="${accent}" font-family="JetBrains Mono, monospace" text-anchor="middle">×${k}</text>`;
+    }
+  }
+
+  layer.innerHTML = s;
+}
+
+function renderDrawMode(){
+  const layer = document.getElementById('drawLayer');
+  if(state.mode!=='drawShape'){ layer.innerHTML=''; return; }
+  const pts = state.drawingPoints;
+  let s = '';
+  if(pts.length>1){
+    s += `<polyline points="${ptStr(pts)}" fill="none" stroke="#1B2A4A" stroke-width="0.09" stroke-dasharray="0.3 0.2"/>`;
+  }
+  pts.forEach(p=>{
+    const sp = toSvg(p);
+    s += `<circle cx="${sp.x}" cy="${sp.y}" r="0.16" fill="#1B2A4A"/>`;
+  });
+  layer.innerHTML = s;
+}
+
+function renderCoordTable(t){
+  const orig = state.points;
+  const img = imagePoints(t);
+  const lbl = letters(orig.length);
+  const accent = COLORS[state.active];
+  let rows = `<tr><th>Vertex</th><th>Original</th><th>Image</th></tr>`;
+  orig.forEach((p,i)=>{
+    const q = img[i];
+    rows += `<tr>
+      <td class="mono">${lbl[i]} → ${lbl[i]}\u2032</td>
+      <td class="mono">(${round1(p.x)}, ${round1(p.y)})</td>
+      <td class="mono col-image" style="--accent:${accent}">(${round1(q.x)}, ${round1(q.y)})</td>
+    </tr>`;
+  });
+  document.getElementById('coordTable').innerHTML = rows;
+}
+function round1(v){ return Math.round(v*10)/10; }
+
+function render(){
+  const t = state.animT;
+  renderShapes(t);
+  renderOverlay(t);
+  renderDrawMode();
+  if(!state.quiz.active) renderCoordTable(t);
+  updateHint();
+  wireDragHandlers();
+}
+
+/* ============================= UI SYNC ============================= */
+function updateHint(){
+  const bar = document.getElementById('hintBar');
+  const dot = document.getElementById('hintDot');
+  const text = document.getElementById('hintText');
+  if(state.quiz.active){
+    bar.style.background = TINTS.reflect;
+    dot.style.background = COLORS.reflect;
+    text.textContent = 'Look at the grid, then answer on the right.';
+    return;
+  }
+  bar.style.background = TINTS[state.active];
+  dot.style.background = COLORS[state.active];
+  text.textContent = HINTS[state.active];
+}
+
+function syncTabs(){
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.type===state.active);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>{
+    p.classList.toggle('active', p.dataset.panel===state.active);
+  });
+}
+function syncReflectChips(){
+  document.querySelectorAll('#reflectChips .chip').forEach(c=>{
+    c.classList.toggle('active', c.dataset.line===state.params.reflect.line);
+  });
+  document.getElementById('reflectCustomFields').classList.toggle('open', state.params.reflect.line==='custom');
+}
+function syncRotateChips(){
+  document.querySelectorAll('[data-angle]').forEach(c=>{
+    c.classList.toggle('active', Number(c.dataset.angle)===state.params.rotate.angle);
+  });
+  document.querySelectorAll('[data-dir]').forEach(c=>{
+    c.classList.toggle('active', c.dataset.dir===state.params.rotate.dir);
+  });
+}
+function syncInputs(){
+  document.getElementById('t-dx').value = state.params.translate.dx;
+  document.getElementById('t-dy').value = state.params.translate.dy;
+  document.getElementById('r-m').value = state.params.reflect.m;
+  document.getElementById('r-c').value = state.params.reflect.c;
+  document.getElementById('ro-cx').value = state.params.rotate.cx;
+  document.getElementById('ro-cy').value = state.params.rotate.cy;
+  document.getElementById('e-cx').value = state.params.enlarge.cx;
+  document.getElementById('e-cy').value = state.params.enlarge.cy;
+  document.getElementById('e-k').value = state.params.enlarge.k;
+}
+
+/* ============================= EVENT HANDLERS ============================= */
+function setActiveTransform(type){
+  if(state.mode!=='normal') cancelMode();
+  state.active = type;
+  state.animT = 1;
+  syncTabs();
+  render();
+}
+function onParamChange(){
+  state.params.translate.dx = Number(document.getElementById('t-dx').value)||0;
+  state.params.translate.dy = Number(document.getElementById('t-dy').value)||0;
+  state.params.reflect.m = Number(document.getElementById('r-m').value)||0;
+  state.params.reflect.c = Number(document.getElementById('r-c').value)||0;
+  state.params.rotate.cx = Number(document.getElementById('ro-cx').value)||0;
+  state.params.rotate.cy = Number(document.getElementById('ro-cy').value)||0;
+  state.params.enlarge.cx = Number(document.getElementById('e-cx').value)||0;
+  state.params.enlarge.cy = Number(document.getElementById('e-cy').value)||0;
+  let k = Number(document.getElementById('e-k').value);
+  if(k===0) k = 1;
+  state.params.enlarge.k = k;
+  state.animT = 1;
+  render();
+}
+function step(id, delta){
+  const input = document.getElementById(id);
+  let v = Number(input.value)||0;
+  v = Math.round((v+delta)*100)/100;
+  const min = Number(input.min), max = Number(input.max);
+  if(!isNaN(min)) v = Math.max(min, v);
+  if(!isNaN(max)) v = Math.min(max, v);
+  input.value = v;
+  onParamChange();
+}
+function setReflectLine(line){
+  state.params.reflect.line = line;
+  syncReflectChips();
+  state.animT = 1;
+  render();
+}
+function setRotateAngle(a){
+  state.params.rotate.angle = a;
+  syncRotateChips();
+  state.animT = 1;
+  render();
+}
+function setRotateDir(d){
+  state.params.rotate.dir = d;
+  syncRotateChips();
+  state.animT = 1;
+  render();
+}
+
+/* ---- shape selection ---- */
+function onShapeSelect(key){
+  if(key==='custom'){
+    startDrawShape();
+    return;
+  }
+  state.shapeKey = key;
+  state.points = PRESETS[key].map(p=>({x:p[0], y:p[1]}));
+  state.animT = 1;
+  render();
+}
+
+/* ---- draw custom shape ---- */
+function startDrawShape(){
+  state.mode = 'drawShape';
+  state.drawingPoints = [];
+  const banner = document.getElementById('modeBanner');
+  banner.style.display='flex';
+  document.getElementById('modeBannerText').textContent = 'Click the grid to add points (need at least 3).';
+  document.getElementById('modeBannerBtn').textContent='Finish';
+  document.getElementById('modeBannerBtn2').style.display='inline-flex';
+  render();
+}
+function undoDrawPoint(){
+  state.drawingPoints.pop();
+  render();
+}
+function finishDrawShape(){
+  if(state.drawingPoints.length<3) return;
+  state.points = state.drawingPoints.map(p=>({x:p.x,y:p.y}));
+  state.shapeKey='custom';
+  state.mode='normal';
+  document.getElementById('modeBanner').style.display='none';
+  state.animT = 1;
+  render();
+}
+function cancelMode(){
+  if(state.mode==='drawShape'){
+    document.getElementById('shapeSelect').value = state.shapeKey;
+  }
+  state.mode='normal';
+  document.getElementById('modeBanner').style.display='none';
+  document.getElementById('rotatePickBtn').classList.remove('active');
+  document.getElementById('enlargePickBtn').classList.remove('active');
+  render();
+}
+
+/* ---- pick centre ---- */
+function togglePickCenter(which){
+  if(state.mode==='pickCenter'){ cancelMode(); return; }
+  state.mode='pickCenter';
+  state.pickTarget = which;
+  const banner = document.getElementById('modeBanner');
+  banner.style.display='flex';
+  document.getElementById('modeBannerText').textContent = 'Click the grid to set the centre.';
+  document.getElementById('modeBannerBtn').style.display='none';
+  document.getElementById('modeBannerBtn2').style.display='none';
+  document.getElementById('rotatePickBtn').classList.toggle('active', which==='rotate');
+  document.getElementById('enlargePickBtn').classList.toggle('active', which==='enlarge');
+}
+
+/* ---- canvas click routing ---- */
+function onSvgClick(evt){
+  const clientX = evt.clientX ?? (evt.touches && evt.touches[0].clientX);
+  const clientY = evt.clientY ?? (evt.touches && evt.touches[0].clientY);
+  const m = clientToMath(clientX, clientY);
+  if(state.mode==='drawShape'){
+    state.drawingPoints.push({x:snap(m.x,0.5), y:snap(m.y,0.5)});
+    render();
+  } else if(state.mode==='pickCenter'){
+    const sx = snap(m.x,0.5), sy = snap(m.y,0.5);
+    if(state.pickTarget==='rotate'){
+      state.params.rotate.cx = sx; state.params.rotate.cy = sy;
+      document.getElementById('ro-cx').value = sx;
+      document.getElementById('ro-cy').value = sy;
+    } else {
+      state.params.enlarge.cx = sx; state.params.enlarge.cy = sy;
+      document.getElementById('e-cx').value = sx;
+      document.getElementById('e-cy').value = sy;
+    }
+    document.getElementById('modeBanner').style.display='none';
+    document.getElementById('rotatePickBtn').classList.remove('active');
+    document.getElementById('enlargePickBtn').classList.remove('active');
+    state.mode='normal';
+    state.animT = 1;
+    render();
+  }
+}
+
+/* ---- drag to translate ---- */
+function wireDragHandlers(){
+  const poly = document.querySelector('#origLayer polygon');
+  if(!poly) return;
+  poly.style.cursor = (state.active==='translate' && state.mode==='normal') ? 'grab' : 'default';
+  poly.onpointerdown = (state.active==='translate' && state.mode==='normal') ? startDrag : null;
+}
+function startDrag(evt){
+  evt.preventDefault();
+  const startMath = clientToMath(evt.clientX, evt.clientY);
+  const startDx = state.params.translate.dx;
+  const startDy = state.params.translate.dy;
+  state.dragging = true;
+  function onMove(e){
+    const m = clientToMath(e.clientX, e.clientY);
+    const nd = snap(startDx + (m.x-startMath.x), 1);
+    const ndy = snap(startDy + (m.y-startMath.y), 1);
+    state.params.translate.dx = nd;
+    state.params.translate.dy = ndy;
+    document.getElementById('t-dx').value = nd;
+    document.getElementById('t-dy').value = ndy;
+    state.animT = 1;
+    render();
+  }
+  function onUp(){
+    state.dragging = false;
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+  }
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+}
+
+/* ---- animation ---- */
+function playAnimation(){
+  if(state.animating) return;
+  state.animating = true;
+  const dur = 900;
+  const start = performance.now();
+  function ease(x){ return x<0.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2; }
+  function frame(now){
+    const raw = Math.min(1, (now-start)/dur);
+    state.animT = ease(raw);
+    render();
+    if(raw<1){ requestAnimationFrame(frame); }
+    else { state.animT = 1; state.animating=false; render(); }
+  }
+  state.animT = 0;
+  requestAnimationFrame(frame);
+}
+
+/* ---- reset ---- */
+function resetAll(){
+  state.shapeKey='triangle';
+  state.points = PRESETS.triangle.map(p=>({x:p[0],y:p[1]}));
+  state.active='translate';
+  state.params = {
+    translate:{dx:3, dy:2},
+    reflect:{line:'y-axis', m:1, c:0},
+    rotate:{cx:0, cy:0, angle:90, dir:'cw'},
+    enlarge:{cx:0, cy:0, k:2}
+  };
+  state.animT = 1;
+  state.mode='normal';
+  document.getElementById('shapeSelect').value='triangle';
+  document.getElementById('modeBanner').style.display='none';
+  if(state.quiz.active) toggleQuiz();
+  syncTabs(); syncReflectChips(); syncRotateChips(); syncInputs();
+  render();
+}
+
+/* ============================= QUIZ ============================= */
+function toggleQuiz(){
+  state.quiz.active = !state.quiz.active;
+  const btn = document.getElementById('quizToggleBtn');
+  btn.classList.toggle('active', state.quiz.active);
+  btn.textContent = state.quiz.active ? 'Exit quiz' : 'Quiz mode';
+  document.getElementById('normalControls').style.display = state.quiz.active ? 'none' : 'block';
+  document.getElementById('shapeSection').style.display = state.quiz.active ? 'none' : 'block';
+  document.getElementById('quizPanel').style.display = state.quiz.active ? 'block' : 'none';
+  document.getElementById('coordPanel').style.display = state.quiz.active ? 'none' : 'block';
+  if(state.mode!=='normal') cancelMode();
+  if(state.quiz.active){
+    state.quiz.score = {correct:0, total:0};
+    nextQuizQuestion();
+  } else {
+    render();
+  }
+}
+
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function pick(arr){ return arr[randInt(0,arr.length-1)]; }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function nextQuizQuestion(){
+  const type = pick(['translate','reflect','rotate','enlarge']);
+  const shapeKey = pick(QUIZ_SHAPES);
+  state.shapeKey = shapeKey;
+  state.points = PRESETS[shapeKey].map(p=>({x:p[0], y:p[1]}));
+  state.active = type;
+  state.animT = 1;
+
+  let q = { type };
+  if(type==='translate'){
+    let dx, dy;
+    do { dx = randInt(-6,6); dy = randInt(-6,6); } while(dx===0 && dy===0);
+    state.params.translate = {dx,dy};
+    q.answer = `(${dx}, ${dy})`;
+    const distractors = new Set();
+    while(distractors.size<3){
+      const d = `(${randInt(-6,6)}, ${randInt(-6,6)})`;
+      if(d!==q.answer) distractors.add(d);
+    }
+    q.options = shuffle([q.answer, ...distractors]);
+  }
+  if(type==='reflect'){
+    const lines = ['x-axis','y-axis','y=x','y=-x'];
+    const line = pick(lines);
+    state.params.reflect = {line, m:1, c:0};
+    q.answer = line==='y=-x' ? 'y = −x' : (line==='y=x' ? 'y = x' : line);
+    q.options = lines.map(l=> l==='y=-x' ? 'y = −x' : (l==='y=x' ? 'y = x' : l));
+  }
+  if(type==='rotate'){
+    const angle = pick([90,180,270]);
+    const dir = pick(['cw','ccw']);
+    state.params.rotate = {cx:0, cy:0, angle, dir};
+    q.answer = angle===180 ? '180°' : `${angle}° ${dir==='cw'?'clockwise':'anticlockwise'}`;
+    const optSet = new Set([q.answer]);
+    const pool = [90,180,270].flatMap(a=> a===180 ? ['180°'] : [`${a}° clockwise`, `${a}° anticlockwise`]);
+    while(optSet.size<4 && optSet.size<pool.length){ optSet.add(pick(pool)); }
+    q.options = shuffle([...optSet]);
+  }
+  if(type==='enlarge'){
+    const k = pick([2,3,0.5,-1,-2]);
+    state.params.enlarge = {cx:0, cy:0, k};
+    q.answer = `×${k}`;
+    const pool = [2,3,0.5,-1,-2,-0.5].map(v=>`×${v}`);
+    const optSet = new Set([q.answer]);
+    while(optSet.size<4){ optSet.add(pick(pool)); }
+    q.options = shuffle([...optSet]);
+  }
+
+  state.quiz.current = q;
+  state.quiz.stage = 1;
+  renderQuizStage1();
+  render();
+}
+
+function renderQuizStage1(){
+  document.getElementById('quizNextBtn').style.display='none';
+  document.getElementById('quizFeedback').textContent='';
+  document.getElementById('quizFeedback').className='quiz-feedback';
+  document.getElementById('quizQuestion').textContent = 'What type of transformation is shown?';
+  const opts = ['translate','reflect','rotate','enlarge'];
+  const names = {translate:'Translation', reflect:'Reflection', rotate:'Rotation', enlarge:'Enlargement'};
+  const wrap = document.getElementById('quizOptions');
+  wrap.innerHTML='';
+  shuffle(opts).forEach(o=>{
+    const b = document.createElement('button');
+    b.className='quiz-opt';
+    b.textContent = names[o];
+    b.onclick = ()=> answerStage1(o, b);
+    wrap.appendChild(b);
+  });
+}
+function answerStage1(choice, btn){
+  const correct = state.quiz.current.type;
+  if(choice===correct){
+    btn.classList.add('correct');
+    document.getElementById('quizFeedback').textContent='Correct! Now describe it fully.';
+    document.getElementById('quizFeedback').className='quiz-feedback ok';
+    setTimeout(renderQuizStage2, 500);
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('quizFeedback').textContent='Not quite — look again and try another option.';
+    document.getElementById('quizFeedback').className='quiz-feedback bad';
+  }
+}
+function renderQuizStage2(){
+  const q = state.quiz.current;
+  const labelMap = {translate:'What is the column vector?', reflect:'What is the mirror line?', rotate:'What is the angle and direction?', enlarge:'What is the scale factor?'};
+  document.getElementById('quizQuestion').textContent = labelMap[q.type];
+  document.getElementById('quizFeedback').textContent='';
+  document.getElementById('quizFeedback').className='quiz-feedback';
+  const wrap = document.getElementById('quizOptions');
+  wrap.innerHTML='';
+  q.options.forEach(o=>{
+    const b = document.createElement('button');
+    b.className='quiz-opt';
+    b.textContent = o;
+    b.onclick = ()=> answerStage2(o, b);
+    wrap.appendChild(b);
+  });
+}
+function answerStage2(choice, btn){
+  const q = state.quiz.current;
+  if(choice===q.answer){
+    btn.classList.add('correct');
+    state.quiz.score.total++;
+    state.quiz.score.correct++;
+    document.getElementById('scoreBadge').textContent = `${state.quiz.score.correct} / ${state.quiz.score.total}`;
+    document.getElementById('quizFeedback').textContent='Correct!';
+    document.getElementById('quizFeedback').className='quiz-feedback ok';
+    document.querySelectorAll('#quizOptions .quiz-opt').forEach(b=>b.onclick=null);
+    document.getElementById('quizNextBtn').style.display='block';
+    state.animT = 1; render();
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('quizFeedback').textContent='Not quite — try again.';
+    document.getElementById('quizFeedback').className='quiz-feedback bad';
+  }
+}
+
+/* ============================= INIT ============================= */
+function init(){
+  buildGrid();
+  svgEl().addEventListener('pointerdown', function(e){
+    if(state.mode==='drawShape' || state.mode==='pickCenter'){
+      if(e.target.closest('#modeBanner')) return;
+      onSvgClick(e);
+    }
+  });
+  syncTabs();
+  syncReflectChips();
+  syncRotateChips();
+  syncInputs();
+  document.querySelector('.tab-btn[data-type="translate"]').classList.add('active');
+  render();
+}
+init();
+</script>
+</body>
+</html>
